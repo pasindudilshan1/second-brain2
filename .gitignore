@@ -1,0 +1,5 @@
+credentials.json
+.gdrive_cache/
+__pycache__/
+*.pyc
+second-brain/raw/articles/*

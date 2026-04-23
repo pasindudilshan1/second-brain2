@@ -1,0 +1,4 @@
+interface:
+  display_name: "Extract Key Ideas"
+  short_description: "Score article ideas and build Obsidian links"
+  default_prompt: "Use $extract-key-ideas to extract five scored key ideas from saved articles and build Obsidian links."

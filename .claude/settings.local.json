@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python sync_drive_articles.py)",
+      "Bash(python cleanup_second_brain.py)",
+      "Bash(python cleanup_second_brain.py --apply)",
+      "Bash(pip install *)",
+      "Bash(Test-Path *)",
+      "Bash(dir *)",
+      "Bash(awk '$5 > 500 {print $9}')",
+      "Bash(python *)"
+    ]
+  }
+}
