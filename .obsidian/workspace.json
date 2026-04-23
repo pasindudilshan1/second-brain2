@@ -11,14 +11,10 @@
             "id": "cbe47caf523fd460",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "second-brain/wiki/key-ideas/ai-adoption-in-finance-and-accounting.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "ai-adoption-in-finance-and-accounting"
+              "title": "New tab"
             }
           }
         ]
@@ -185,11 +181,13 @@
   },
   "active": "cbe47caf523fd460",
   "lastOpenFiles": [
+    "PROCESS_README.md",
+    "COMMANDS_README.md",
+    "second-brain/wiki/key-ideas/ai-adoption-in-finance-and-accounting.md",
     "second-brain/wiki/article-notes/article--6-finance-challenges-cfos-are-facing-today.md",
     "README.md",
     "second-brain/wiki/maps/graph-connections-report.md",
     "verify_graph_connections.py",
-    "second-brain/wiki/key-ideas/ai-adoption-in-finance-and-accounting.md",
     "second-brain/wiki/key-ideas/cfo-strategic-leadership.md",
     "second-brain/wiki/article-notes/article--cfos-face-expanded-mandate-pressures-in-a-volatile-2026-deloitte.md",
     "second-brain/wiki/maps/graph-view-guide.md",
@@ -211,8 +209,6 @@
     "second-brain/wiki/article-notes/article--top-challenges-facing-accounting-firms-in-2026.md",
     "second-brain/wiki/key-ideas/cfo-uncertainty-and-volatility.md.tmp.14616.1776961017306",
     "second-brain/wiki/key-ideas/finance-talent-and-skills-gap.md",
-    "second-brain/wiki/article-notes/article--gartner-identifies-seven-behaviors-that-define-future-ready-cfos.md",
-    "regulatory-complexity-as-top-challenge.md",
     "second-brain/wiki/key-ideas",
     "second-brain/wiki/article-notes",
     "run_pipeline.py",

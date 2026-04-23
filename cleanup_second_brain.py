@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove obvious clutter from the second-brain project."""
+"""Remove obvious clutter from the second-brain project or reset generated wiki output."""
 
 from __future__ import annotations
 
@@ -15,6 +15,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 VAULT_DIR = PROJECT_ROOT / "second-brain"
 ARTICLES_DIR = VAULT_DIR / "raw" / "articles"
+WIKI_DIR = VAULT_DIR / "wiki"
+ARTICLE_NOTES_DIR = WIKI_DIR / "article-notes"
+KEY_IDEAS_DIR = WIKI_DIR / "key-ideas"
+MAPS_DIR = WIKI_DIR / "maps"
+MAP_FILES_TO_KEEP = {"graph-view-guide.md"}
 
 
 def file_hash(path: Path) -> str:
@@ -33,7 +38,18 @@ def preferred_duplicate(files: list[Path]) -> Path:
     return sorted(files, key=score)[0]
 
 
-def collect_targets() -> tuple[list[Path], list[Path], dict[str, list[Path]]]:
+def dedupe_paths(paths: list[Path]) -> list[Path]:
+    seen: set[Path] = set()
+    unique_paths: list[Path] = []
+    for path in paths:
+        if path in seen:
+            continue
+        unique_paths.append(path)
+        seen.add(path)
+    return unique_paths
+
+
+def collect_clutter_targets() -> tuple[list[Path], list[Path], dict[str, list[Path]]]:
     files_to_delete: list[Path] = []
     dirs_to_delete: list[Path] = []
     duplicate_groups: dict[str, list[Path]] = {}
@@ -65,19 +81,40 @@ def collect_targets() -> tuple[list[Path], list[Path], dict[str, list[Path]]]:
             duplicate_groups[digest] = paths
             files_to_delete.extend(duplicates)
 
-    # De-duplicate while preserving order.
-    seen = set()
-    unique_files = []
-    for path in files_to_delete:
-        if path not in seen:
-            unique_files.append(path)
-            seen.add(path)
+    return dedupe_paths(files_to_delete), dedupe_paths(dirs_to_delete), duplicate_groups
 
-    return unique_files, dirs_to_delete, duplicate_groups
+
+def collect_wiki_reset_targets() -> tuple[list[Path], list[Path]]:
+    files_to_delete: list[Path] = []
+    dirs_to_delete: list[Path] = []
+
+    for path in [WIKI_DIR / "index.md", WIKI_DIR / "log.md"]:
+        if path.exists() and path.is_file():
+            files_to_delete.append(path)
+
+    for root in [ARTICLE_NOTES_DIR, KEY_IDEAS_DIR]:
+        if not root.exists():
+            continue
+        for path in sorted(root.rglob("*"), key=lambda p: (len(p.parts), p.as_posix()), reverse=True):
+            if path.is_file():
+                files_to_delete.append(path)
+            elif path.is_dir():
+                dirs_to_delete.append(path)
+
+    if MAPS_DIR.exists():
+        for path in sorted(MAPS_DIR.rglob("*"), key=lambda p: (len(p.parts), p.as_posix()), reverse=True):
+            if path == MAPS_DIR:
+                continue
+            if path.is_file() and path.name not in MAP_FILES_TO_KEEP:
+                files_to_delete.append(path)
+            elif path.is_dir():
+                dirs_to_delete.append(path)
+
+    return dedupe_paths(files_to_delete), dedupe_paths(dirs_to_delete)
 
 
 def write_report(files: list[Path], dirs: list[Path], duplicate_groups: dict[str, list[Path]]) -> None:
-    report_path = VAULT_DIR / "wiki" / "maps" / "cleanup-report.md"
+    report_path = MAPS_DIR / "cleanup-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         "---",
@@ -122,15 +159,58 @@ def write_report(files: list[Path], dirs: list[Path], duplicate_groups: dict[str
     report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_wiki_reset_files() -> None:
+    ARTICLE_NOTES_DIR.mkdir(parents=True, exist_ok=True)
+    KEY_IDEAS_DIR.mkdir(parents=True, exist_ok=True)
+    MAPS_DIR.mkdir(parents=True, exist_ok=True)
+
+    index_lines = [
+        "# Wiki Index",
+        "",
+        "Generated wiki content has been reset for a fresh sync and analysis run.",
+        "",
+        "## Status",
+        "",
+        "- Article notes: 0",
+        "- Key ideas: 0",
+        "- Maps: pending regeneration",
+        "",
+        f"*Reset: {date.today().isoformat()}*",
+    ]
+    (WIKI_DIR / "index.md").write_text("\n".join(index_lines) + "\n", encoding="utf-8")
+
+    log_lines = [
+        "# Wiki Activity Log",
+        "",
+        "Append-only log of wiki changes and updates.",
+        "",
+        f"## {date.today().isoformat()}",
+        "",
+        "- Reset generated wiki content for a fresh sync and full analysis run.",
+    ]
+    (WIKI_DIR / "log.md").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="Actually delete files. Without this, only preview.")
+    parser.add_argument(
+        "--reset-wiki",
+        action="store_true",
+        help="Delete generated wiki output while keeping raw/articles intact.",
+    )
     args = parser.parse_args()
 
-    files, dirs, duplicate_groups = collect_targets()
+    if args.reset_wiki:
+        files, dirs = collect_wiki_reset_targets()
+        duplicate_groups: dict[str, list[Path]] = {}
+    else:
+        files, dirs, duplicate_groups = collect_clutter_targets()
+
     print(f"Files selected:      {len(files)}")
     print(f"Directories selected:{len(dirs)}")
-    print(f"Duplicate groups:    {len(duplicate_groups)}")
+    if not args.reset_wiki:
+        print(f"Duplicate groups:    {len(duplicate_groups)}")
 
     for path in files[:30]:
         print(f"  file: {path}")
@@ -149,6 +229,11 @@ def main() -> None:
     for path in dirs:
         if path.exists() and path.is_dir():
             shutil.rmtree(path)
+
+    if args.reset_wiki:
+        write_wiki_reset_files()
+        print("\nWiki reset complete. Generated folders are ready for a fresh sync and analysis run.")
+        return
 
     write_report(files, dirs, duplicate_groups)
     print("\nCleanup complete. Report written to second-brain/wiki/maps/cleanup-report.md")

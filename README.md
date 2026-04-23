@@ -93,6 +93,9 @@ Main command options:
 | `/insights` | Summarizes strongest themes and writing angles | `/insights AI in accounting` |
 | `/visualize` | Explains how to inspect the network in Obsidian | `/visualize` |
 
+For a command-by-command guide with examples, see [COMMANDS_README.md](COMMANDS_README.md).
+For a plain-language explanation of how the whole workflow works, see [PROCESS_README.md](PROCESS_README.md).
+
 If slash commands are not available, use the skill directly:
 
 ```text
@@ -178,6 +181,8 @@ Support scripts:
 ```powershell
 python cleanup_second_brain.py
 python cleanup_second_brain.py --apply
+python cleanup_second_brain.py --reset-wiki
+python cleanup_second_brain.py --reset-wiki --apply
 python verify_graph_connections.py
 python verify_graph_connections.py --fix
 python sync_drive_articles.py
@@ -186,6 +191,7 @@ python sync_drive_articles.py
 What they do:
 
 - `cleanup_second_brain.py`: previews clutter removal by default; `--apply` actually deletes empty placeholders, exact duplicates, and cache folders
+- `cleanup_second_brain.py --reset-wiki`: previews a reset of generated wiki outputs while keeping `raw/articles/` intact; add `--apply` to perform the reset
 - `verify_graph_connections.py`: checks backlinks and relationship coverage, then writes `second-brain/wiki/maps/graph-connections-report.md`
 - `sync_drive_articles.py`: downloads new or updated Markdown files from Google Drive into `second-brain/raw/articles/`
 
