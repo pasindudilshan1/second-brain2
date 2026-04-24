@@ -3,3 +3,15 @@ credentials.json
 __pycache__/
 *.pyc
 second-brain/raw/articles/*
+
+# Obsidian local state
+.obsidian/graph.json
+.obsidian/workspace.json
+
+# Generated wiki outputs
+second-brain/wiki/article-notes/
+second-brain/wiki/key-ideas/
+second-brain/wiki/index.md
+second-brain/wiki/log.md
+second-brain/wiki/maps/core-connections.md
+second-brain/wiki/maps/writing-board.md
