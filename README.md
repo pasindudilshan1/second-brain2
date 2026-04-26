@@ -284,6 +284,7 @@ Then run:
 
 ```powershell
 python sync_drive_articles.py
+python sync_drive_articles.py --limit 5
 ```
 
 What the script does:
@@ -292,6 +293,7 @@ What the script does:
 - downloads direct child `.md` and `.markdown` files
 - saves them into `second-brain/raw/articles/`
 - skips local files that are already up to date
+- with `--limit N`, syncs only the newest `N` new or updated markdown files
 
 Note:
 
@@ -337,6 +339,7 @@ Run:
 
 ```powershell
 python sync_drive_articles.py
+python sync_drive_articles.py --limit 5
 ```
 
 ## 10. Process The Articles
@@ -355,7 +358,7 @@ What these commands mean:
 
 - `/extract 5`: process 5 local articles
 - `/ingest 5`: similar to extract, but phrased as ingestion
-- `/sync-and-analyze 5`: sync from Drive, then process 5 articles
+- `/sync-and-analyze 5`: sync up to 5 newest new or updated markdown files from Drive, then process those synced files
 - `/insights`: summarize patterns and writing angles
 - `/visualize`: explain how to inspect the network in Obsidian
 
@@ -393,6 +396,7 @@ Run these from the repo root:
 
 ```powershell
 python sync_drive_articles.py
+python sync_drive_articles.py --limit 5
 python cleanup_second_brain.py
 python cleanup_second_brain.py --apply
 python cleanup_second_brain.py --reset-wiki

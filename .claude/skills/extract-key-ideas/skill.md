@@ -11,6 +11,7 @@ Do the key-idea extraction by reading and reasoning over the article text. Do no
 
 It is acceptable to run non-extraction commands for support tasks, such as:
 - `python sync_drive_articles.py` to sync raw articles from Google Drive.
+- `python sync_drive_articles.py --limit N` to sync only the newest `N` new or updated raw articles from Google Drive.
 - `python cleanup_second_brain.py --apply` only when the user asks to clean clutter.
 
 ## Vault Paths
@@ -31,6 +32,7 @@ Never edit raw article source files except for explicit cleanup of empty or dupl
 
 1. Select articles from `second-brain/raw/articles/`.
    - Prefer new or changed non-empty `.md` files.
+   - If a sync step used `python sync_drive_articles.py --limit N`, process only the files that were downloaded or updated by that sync.
    - If the user gives no limit, process a manageable batch and state what was processed.
    - Skip empty files and obvious bot/challenge pages such as "just a moment".
 2. Read each article enough to understand the argument, not just headings.

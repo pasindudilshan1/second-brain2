@@ -19,4 +19,13 @@ Expected outputs:
 - `second-brain/wiki/index.md`
 - `second-brain/wiki/log.md`
 
-If `$ARGUMENTS` gives a batch size, process that many non-empty articles after sync. If no argument is given, process a small new/unprocessed batch and report exactly which files were handled.
+If `$ARGUMENTS` gives a batch size:
+- Run `python sync_drive_articles.py --limit N`
+- Sync only the newest `N` new or updated markdown files from Google Drive
+- Process only the files that were downloaded or updated by that sync
+- If fewer than `N` files changed, process only the changed files
+- If no files changed, report that and do not process unrelated local articles
+
+If `$ARGUMENTS` gives a file path, run the normal sync and then process that file.
+
+If no argument is given, run the normal sync and then process a small new or unprocessed batch. Report exactly which files were handled.

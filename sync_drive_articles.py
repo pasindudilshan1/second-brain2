@@ -4,6 +4,7 @@ Sync markdown files from a Google Drive folder to raw/articles/
 
 Usage:
     python sync_drive_articles.py
+    python sync_drive_articles.py --limit 5
 
 Setup:
     1. Create a service account in Google Cloud Console
@@ -13,6 +14,7 @@ Setup:
     5. Set DRIVE_FOLDER_ID in this script or as env var
 """
 
+import argparse
 import os
 import sys
 import json
@@ -160,6 +162,11 @@ def is_markdown_file(file_info: dict) -> bool:
     return name.endswith((".md", ".markdown")) or mime_type == "text/markdown"
 
 
+def parse_remote_mtime(file_info: dict) -> datetime:
+    """Parse a Drive modifiedTime string into an aware datetime."""
+    return datetime.fromisoformat(file_info["modifiedTime"].replace("Z", "+00:00"))
+
+
 def get_local_files() -> dict[str, dict]:
     """Get existing .md files in articles folder with their metadata."""
     local_files = {}
@@ -205,7 +212,78 @@ def download_file(file_id: str, file_name: str, service) -> Path | None:
         return None
 
 
-def sync_files():
+def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
+    parser = argparse.ArgumentParser(
+        description="Sync markdown files from a Google Drive folder to second-brain/raw/articles/."
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Sync at most this many newest new or updated markdown files from Drive.",
+    )
+    args = parser.parse_args()
+
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be greater than 0")
+
+    return args
+
+
+def classify_remote_files(
+    remote_files: list[dict], local_files: dict[str, dict]
+) -> tuple[list[dict], list[dict]]:
+    """Split remote markdown files into download targets and up-to-date items."""
+    download_targets = []
+    up_to_date = []
+
+    for remote in remote_files:
+        file_name = remote["name"]
+        remote_mtime = parse_remote_mtime(remote)
+        local = local_files.get(file_name)
+
+        if not local:
+            download_targets.append(
+                {
+                    "action": "NEW",
+                    "remote": remote,
+                    "remote_mtime": remote_mtime,
+                    "local_mtime": None,
+                }
+            )
+            continue
+
+        local_mtime = local["mtime"]
+        if remote_mtime > local_mtime:
+            download_targets.append(
+                {
+                    "action": "UPDATE",
+                    "remote": remote,
+                    "remote_mtime": remote_mtime,
+                    "local_mtime": local_mtime,
+                }
+            )
+        else:
+            up_to_date.append(
+                {
+                    "action": "SKIP",
+                    "remote": remote,
+                    "remote_mtime": remote_mtime,
+                    "local_mtime": local_mtime,
+                }
+            )
+
+    download_targets.sort(
+        key=lambda item: (item["remote_mtime"], item["remote"]["name"].lower()),
+        reverse=True,
+    )
+    up_to_date.sort(key=lambda item: item["remote"]["name"].lower())
+
+    return download_targets, up_to_date
+
+
+def sync_files(limit: int | None = None):
     """Main sync logic - pull new/updated .md files from Drive."""
 
     print(f"Syncing markdown files from Drive folder: {DRIVE_FOLDER_ID}")
@@ -276,41 +354,56 @@ def sync_files():
     # Get local files
     local_files = get_local_files()
 
+    download_targets, up_to_date = classify_remote_files(remote_files, local_files)
+    deferred_targets = []
+
+    if limit is not None:
+        print(f"Applying sync limit: newest {limit} new or updated markdown file(s)\n")
+        deferred_targets = download_targets[limit:]
+        download_targets = download_targets[:limit]
+
     # Sync logic
     new_count = 0
     updated_count = 0
-    skipped_count = 0
+    skipped_count = len(up_to_date)
+    deferred_count = len(deferred_targets)
 
-    for remote in remote_files:
+    for target in download_targets:
+        remote = target["remote"]
         file_name = remote["name"]
         file_id = remote["id"]
-        remote_mtime = datetime.fromisoformat(remote["modifiedTime"].replace("Z", "+00:00"))
 
-        if file_name not in local_files:
-            # New file
+        if target["action"] == "NEW":
             print(f"[NEW] {file_name}")
             if download_file(file_id, file_name, service):
                 new_count += 1
-        else:
-            local = local_files[file_name]
-            local_mtime = local["mtime"]
+            continue
 
-            # Compare modification times (account for timezone)
-            if remote_mtime > local_mtime:
-                print(f"[UPDATE] {file_name} (remote: {remote_mtime}, local: {local_mtime})")
-                if download_file(file_id, file_name, service):
-                    updated_count += 1
-            else:
-                print(f"[SKIP] {file_name} (up to date)")
-                skipped_count += 1
+        print(
+            f"[UPDATE] {file_name} "
+            f"(remote: {target['remote_mtime']}, local: {target['local_mtime']})"
+        )
+        if download_file(file_id, file_name, service):
+            updated_count += 1
+
+    for item in up_to_date:
+        print(f"[SKIP] {item['remote']['name']} (up to date)")
+
+    if deferred_targets:
+        print("\nDeferred by limit:")
+        for target in deferred_targets:
+            print(f"  - {target['remote']['name']} ({target['action'].lower()})")
 
     # Summary
     print(f"\n=== Sync Complete ===")
     print(f"  New files:       {new_count}")
     print(f"  Updated files:   {updated_count}")
     print(f"  Skipped:         {skipped_count}")
+    print(f"  Deferred:        {deferred_count}")
+    print(f"  Sync candidates: {len(download_targets) + deferred_count}")
     print(f"  Total in Drive:  {len(remote_files)}")
 
 
 if __name__ == "__main__":
-    sync_files()
+    args = parse_args()
+    sync_files(limit=args.limit)

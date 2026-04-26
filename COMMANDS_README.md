@@ -127,6 +127,7 @@ Purpose: Pull Markdown files from Google Drive, then analyze them with the extra
 What it does:
 
 1. Runs `python sync_drive_articles.py`
+   - If you pass a number, it should run `python sync_drive_articles.py --limit N`
 2. Uses `$extract-key-ideas`
 3. Updates the wiki outputs
 
@@ -149,7 +150,7 @@ Example usage:
 /sync-and-analyze 5
 ```
 
-Meaning: Download new or updated Drive files, then process 5 articles into notes and ideas.
+Meaning: Sync up to 5 newest new or updated markdown files from Google Drive, then analyze only those synced files.
 
 ### `/insights`
 
@@ -352,6 +353,7 @@ Use Python scripts only for support tasks:
 
 ```powershell
 python sync_drive_articles.py
+python sync_drive_articles.py --limit 5
 python cleanup_second_brain.py
 python cleanup_second_brain.py --apply
 python cleanup_second_brain.py --reset-wiki
