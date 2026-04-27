@@ -38,6 +38,7 @@ second-brain/
 |   |-- raw/articles/              # source Markdown articles
 |   `-- wiki/                      # generated notes, ideas, maps
 |-- sync_drive_articles.py         # Google Drive -> raw/articles sync
+|-- sync_drive_wiki.py             # local wiki -> Google Drive sync
 |-- cleanup_second_brain.py        # cleanup utility
 |-- verify_graph_connections.py    # link/report utility
 |-- requirements-drive-sync.txt    # Python packages for Drive sync
@@ -57,6 +58,7 @@ If you want the shortest path, follow these steps in order:
 7. Put `credentials.json` in the repo root if you want Google Drive sync
 8. Open `second-brain/` as your Obsidian vault
 9. Run `/extract 5` or `/sync-and-analyze 5` inside Claude Code
+10. Run `/syncwiki` if you want the generated wiki pushed back to Drive
 
 ## 1. Clone The Repo
 
@@ -123,6 +125,7 @@ When Claude opens, sign in and then use project commands like:
 ```text
 /extract 5
 /sync-and-analyze 5
+/syncwiki
 /insights
 /visualize
 ```
@@ -295,9 +298,24 @@ What the script does:
 - skips local files that are already up to date
 - with `--limit N`, syncs only the newest `N` new or updated markdown files
 
-Note:
+If you also want to upload the generated wiki back to Drive after extraction:
 
-- Nested folders are not scanned
+```powershell
+$env:WIKI_DRIVE_PARENT_FOLDER_ID="YOUR_PARENT_FOLDER_ID_HERE"
+python sync_drive_wiki.py
+```
+
+What the wiki sync does:
+
+- uses `second-brain/wiki/` as the local source by default
+- on the first run, creates or finds a remote `wiki` folder under the configured parent
+- uploads new wiki files and updates changed ones on later runs
+- caches the remote wiki folder ID in `.gdrive_cache/wiki_sync_state.json`
+
+Notes:
+
+- `sync_drive_articles.py` does not scan nested source folders
+- `sync_drive_wiki.py` preserves the nested folder structure inside `second-brain/wiki/`
 - The target Drive folder must be shared with the service account email
 
 ## 8. Open The Vault In Obsidian
@@ -350,6 +368,7 @@ Once articles exist in `second-brain/raw/articles/`, start Claude Code and use o
 /extract 5
 /ingest 5
 /sync-and-analyze 5
+/syncwiki
 /insights
 /visualize
 ```
@@ -359,6 +378,7 @@ What these commands mean:
 - `/extract 5`: process 5 local articles
 - `/ingest 5`: similar to extract, but phrased as ingestion
 - `/sync-and-analyze 5`: sync up to 5 newest new or updated markdown files from Drive, then process those synced files
+- `/syncwiki`: sync the generated `second-brain/wiki/` folder to Google Drive
 - `/insights`: summarize patterns and writing angles
 - `/visualize`: explain how to inspect the network in Obsidian
 
@@ -397,6 +417,8 @@ Run these from the repo root:
 ```powershell
 python sync_drive_articles.py
 python sync_drive_articles.py --limit 5
+python sync_drive_wiki.py
+python sync_drive_wiki.py --delete-removed
 python cleanup_second_brain.py
 python cleanup_second_brain.py --apply
 python cleanup_second_brain.py --reset-wiki
@@ -435,6 +457,14 @@ Check:
 - the files are direct children of that folder
 - the files are `.md` or `.markdown`
 
+### Wiki sync cannot create or update files
+
+Check:
+
+- `WIKI_DRIVE_PARENT_FOLDER_ID` is set for the first run, or `WIKI_DRIVE_FOLDER_ID` points to the exact remote wiki folder
+- the service account has `Editor` access on a normal Drive folder, or `Content manager` access on a Shared Drive
+- `second-brain/wiki/` already exists locally and contains the generated notes you want to upload
+
 ### Obsidian graph looks empty
 
 Check:
@@ -449,10 +479,11 @@ If you use this repo regularly, this is the simplest routine:
 
 1. Sync or copy new Markdown articles
 2. Run `/sync-and-analyze 5` or `/extract 5`
-3. Run `/insights`
-4. Open Obsidian
-5. Review `wiki/maps/writing-board.md`
-6. Start writing from the strongest idea cluster
+3. Run `/syncwiki` if you want the current wiki copied to Drive
+4. Run `/insights`
+5. Open Obsidian
+6. Review `wiki/maps/writing-board.md`
+7. Start writing from the strongest idea cluster
 
 ## More Project Docs
 

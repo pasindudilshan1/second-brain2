@@ -44,6 +44,7 @@ Use scripts only for support tasks:
 ```bash
 python sync_drive_articles.py
 python sync_drive_articles.py --limit 5
+python sync_drive_wiki.py
 python cleanup_second_brain.py --apply
 ```
 

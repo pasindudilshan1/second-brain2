@@ -44,7 +44,8 @@ If you want the simplest workflow, use this order:
 1. `/sync-and-analyze 5`
 2. `/insights`
 3. `/visualize`
-4. `/query your question here`
+4. `/syncwiki`
+5. `/query your question here`
 
 If your articles are already local, skip sync and start with:
 
@@ -186,6 +187,39 @@ Example usage:
 
 Meaning: Summarize the strongest AI-related idea clusters and suggest writing angles from the wiki.
 
+### `/syncwiki`
+
+Purpose: Upload the generated wiki folder to Google Drive and sync later changes.
+
+What it does:
+
+- Runs `python sync_drive_wiki.py`
+- Uses `second-brain/wiki/` by default
+- On the first run, creates or finds a remote `wiki` folder in Drive
+- Uploads new files and updates changed files on later runs
+- Leaves remote-only files untouched unless you run the script manually with `--delete-removed`
+
+How to use it:
+
+```text
+/syncwiki
+/syncwiki second-brain/wiki
+```
+
+Use it when:
+
+- Extraction and mapping are already done
+- You want the generated wiki backed up or shared through Google Drive
+- You want later runs to sync only wiki updates
+
+Example usage:
+
+```text
+/syncwiki
+```
+
+Meaning: Sync the current `second-brain/wiki/` folder to the configured Google Drive location.
+
 ### `/query`
 
 Purpose: Ask a question and get an answer based only on the wiki.
@@ -308,6 +342,7 @@ Use it when:
 
 - Need new content from Drive: `/sync-and-analyze`
 - Articles already local: `/extract` or `/ingest`
+- Want to push the generated wiki to Drive: `/syncwiki`
 - Need writing ideas: `/insights`
 - Need answers from the wiki: `/query`
 - Need graph instructions: `/visualize`
@@ -320,6 +355,7 @@ Use it when:
 
 ```text
 /sync-and-analyze 5
+/syncwiki
 /insights
 /visualize
 ```
@@ -354,6 +390,8 @@ Use Python scripts only for support tasks:
 ```powershell
 python sync_drive_articles.py
 python sync_drive_articles.py --limit 5
+python sync_drive_wiki.py
+python sync_drive_wiki.py --delete-removed
 python cleanup_second_brain.py
 python cleanup_second_brain.py --apply
 python cleanup_second_brain.py --reset-wiki
